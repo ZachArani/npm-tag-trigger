@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+  This plugin adds a Post-Build action that informs other NPM packages to build if they depend on that package. Also adds a trigger to cause said build.
+</div>

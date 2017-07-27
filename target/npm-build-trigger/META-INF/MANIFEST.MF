@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Built-By: zach.arani
+Created-By: Apache Maven
+Build-Jdk: 1.8.0_131
+Extension-Name: npm-build-trigger
+Specification-Title: TODO
+Implementation-Title: npm-build-trigger
+Implementation-Version: 1.0-SNAPSHOT
+Group-Id: com.nextthought.jenkins.plugins
+Short-Name: npm-build-trigger
+Long-Name: TODO Plugin
+Url: https://wiki.jenkins-ci.org/display/JENKINS/TODO+Plugin
+Plugin-Version: 1.0-SNAPSHOT (private-07/25/2017 15:01-zach.arani)
+Hudson-Version: 2.14
+Jenkins-Version: 2.14
+Plugin-Developers: 
+
