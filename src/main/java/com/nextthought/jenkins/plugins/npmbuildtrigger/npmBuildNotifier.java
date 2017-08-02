@@ -1,5 +1,6 @@
 package com.nextthought.jenkins.plugins.npmBuildTrigger;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.BuildableItem;
 import hudson.model.Run;
@@ -19,8 +20,15 @@ import hudson.model.Cause.RemoteCause;
 import hudson.tasks.Publisher;
 import hudson.tasks.BuildStepMonitor;
 import hudson.model.AbstractProject;
+import java.io.File;
+import java.lang.Runtime;
+import java.lang.Process;
+import java.lang.ProcessBuilder;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import hudson.security.*;
 import static org.jenkinsci.plugins.github.util.JobInfoHelpers.triggerFrom;
+
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -36,15 +44,35 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
                         @Nonnull FilePath workspace,
                         @Nonnull Launcher launcher,
                         @Nonnull TaskListener listener) throws InterruptedException, IOException {
+        EnvVars env = run.getEnvironment(listener);
+        listener.getLogger().println("Starting notification");
         try(ACLContext ctx = ACL.as(ACL.SYSTEM)){ //Uses the security context of SYSTEM user in order to look at all of the jobs that Jenkins is running. Don't try this at home, kids.
             for(Item i: Jenkins.getInstance().getAllItems(Item.class)){
                 if(triggerFrom(i, npmBuildTrigger.class) != null){
+                    listener.getLogger().println("JOB FOUND " + i.getDisplayName());
                     npmBuildTrigger trig = triggerFrom(i, npmBuildTrigger.class);
-                    trig.checkDependencies(run.getParent().getDisplayName(), run);
+                    trig.checkDependencies(getPackageName(new File(workspace.toString())), run);
                 }
             }
         }
         
+    }
+    
+    public String getPackageName(File workspace){
+        String message = "";
+        try{
+            Runtime rt = Runtime.getRuntime();
+            String[] commands = {"npm", "view", "", "name"};
+            Process proc = rt.exec(commands, null, workspace);
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            String s = null;
+            while((s = stdInput.readLine()) !=null){
+                message+=s;
+            }
+
+        }
+        catch(IOException e){}
+        finally{ return message; }
     }
     
     @Override
@@ -52,7 +80,11 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
         return BuildStepMonitor.NONE;
     }
 
-    
+    @Override
+    public boolean needsToRunAfterFinalized(){
+        return true;
+    }
+
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher>{
         @Override

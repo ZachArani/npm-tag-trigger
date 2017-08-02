@@ -1,5 +1,5 @@
 package com.nextthought.jenkins.plugins.npmBuildTrigger;
-
+import hudson.Proc;
 import hudson.Extension;
 import hudson.model.BuildableItem;
 import hudson.model.Run;
@@ -23,12 +23,26 @@ import hudson.EnvVars;
 import org.json.*;
 import java.util.Iterator;
 import hudson.model.BuildableItem;
+import org.jenkinsci.plugins.github.extension.GHEventsSubscriber;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import hudson.model.TaskListener;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.lang.Runtime;
+import java.lang.Process;
+import java.lang.ProcessBuilder;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+
+
+
 
 @Extension
-public class npmBuildTrigger extends Trigger<Job>  {
-    //The REAL trigger. Although just about all of the action happens in the Event class. Always gotta keep programmers on their toes.
+public class npmBuildTrigger extends Trigger<BuildableItem>  {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GHEventsSubscriber.class);
     String message = "";
-    BuildableItem buildable = (BuildableItem) job;
     Run<?,?> upstreamBuild;
     boolean buildCalled;
     @DataBoundConstructor
@@ -38,35 +52,48 @@ public class npmBuildTrigger extends Trigger<Job>  {
     
     @Override
     public void run(){
-        if(!job.isBuilding() && job.getQueueItem() == null)
-            buildable.scheduleBuild(new UpstreamCause(upstreamBuild));
+        //if(!job.isBuilding())
+            job.scheduleBuild(new UpstreamCause(upstreamBuild));
     }
     
     public void checkDependencies(String triggerer, Run<?,?> upstream){
         upstreamBuild = upstream;
         try{
-            StringWriter test = new StringWriter();
-            StreamTaskListener s = new StreamTaskListener(test);
-            Launcher testLaunch = Jenkins.getInstance().createLauncher(s);
-            testLaunch.launch().cmds("npm view" + job.getDisplayName().replace(".", "-") + "devDependencies --json").stdout(s).start();
-            JSONObject dependencies = new JSONObject(test.toString());
-            test.flush();
-            Iterator<String> keys = dependencies.keys();
+            Runtime rt = Runtime.getRuntime();
+            String[] commands = {"npm", "view", job.getDisplayName().replace(".", "-"), "devDependencies", "--json"};
+            Process proc = rt.exec(commands);
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            String message = "";
+            String s = null;
+            while((s = stdInput.readLine()) !=null){
+                message+=s;
+            }
+            JSONObject deps = new JSONObject(message);
+            Iterator<String> keys = deps.keys();
             while(keys.hasNext()){
                 String npmPackage = keys.next();
-                if(npmPackage.equals(triggerer)){
+                //LOGGER.info(npmPackage);
+                if(npmPackage.equals(triggerer.replace(".", "-"))){
+                    LOGGER.info("PACKAGE FOUND");
                     run();
                     buildCalled = true;
                 }
             }
             if(!buildCalled){
-                testLaunch.launch().cmds("npm view" + job.getDisplayName().replace(".", "-") + "dependencies --json").stdout(s).start();
-                dependencies = new JSONObject(test.toString());
-                test.flush();
-                keys = dependencies.keys();
+                String[] newCommands = {"npm", "view", job.getDisplayName().replace(".", "-"), "dependencies", "--json"};
+                proc = rt.exec(newCommands);
+                //stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+                message = "";
+                s = null;
+                while((s = stdInput.readLine()) !=null)
+                    message+=s;
+                deps = new JSONObject(message);
+                keys = deps.keys();
                 while(keys.hasNext()){
                     String npmPackage = keys.next();
-                    if(npmPackage.equals(triggerer)){
+                    //LOGGER.info(npmPackage);
+                    if(npmPackage.equals(triggerer.replace(".", "-"))){
+                        LOGGER.info("PACKAGE FOUND");
                         run();
                         buildCalled = true;
                     }
@@ -78,7 +105,7 @@ public class npmBuildTrigger extends Trigger<Job>  {
     
     
     
-    public Job getJob(){
+    public BuildableItem getJob(){
             return job;
         }
     
