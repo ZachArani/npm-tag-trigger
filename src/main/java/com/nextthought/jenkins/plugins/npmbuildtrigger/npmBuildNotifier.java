@@ -28,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import hudson.security.*;
 import static org.jenkinsci.plugins.github.util.JobInfoHelpers.triggerFrom;
+import java.util.Iterator;
 
 
 import javax.annotation.Nonnull;
@@ -35,6 +36,10 @@ import java.io.IOException;
 
 public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
     
+    Run<?,?> build;
+    TaskListener buildListener;
+    String message = "";
+
     @DataBoundConstructor
     public npmBuildNotifier(){
     }
@@ -44,6 +49,8 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
                         @Nonnull FilePath workspace,
                         @Nonnull Launcher launcher,
                         @Nonnull TaskListener listener) throws InterruptedException, IOException {
+        buildListener = listener;
+        build = run;
         EnvVars env = run.getEnvironment(listener);
         listener.getLogger().println("Starting notification");
         try(ACLContext ctx = ACL.as(ACL.SYSTEM)){ //Uses the security context of SYSTEM user in order to look at all of the jobs that Jenkins is running. Don't try this at home, kids.
@@ -51,7 +58,8 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
                 if(triggerFrom(i, npmBuildTrigger.class) != null){
                     listener.getLogger().println("JOB FOUND " + i.getDisplayName());
                     npmBuildTrigger trig = triggerFrom(i, npmBuildTrigger.class);
-                    trig.checkDependencies(getPackageName(new File(workspace.toString())), run);
+                    if(checkDependencies(getPackageName(new File(workspace.toString())), getPackageName(i.getRootDir())))
+                        trig.run();
                 }
             }
         }
@@ -74,6 +82,49 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
         catch(IOException e){}
         finally{ return message; }
     }
+    
+    public boolean checkDependencies(String triggerer, String triggeree){
+        try{
+            Runtime rt = Runtime.getRuntime();
+            String[] commands = {"npm", "view", triggeree.replace(".", "-"), "devDependencies", "--json"};
+            Process proc = rt.exec(commands);
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            String message = "";
+            String s = null;
+            while((s = stdInput.readLine()) !=null){
+                message+=s;
+            }
+            buildListener.getLogger().println(message);
+            /*JSONObject deps = new JSONObject("{}");
+            Iterator<String> keys = deps.keys();
+            while(keys.hasNext()){
+                String npmPackage = keys.next();
+                if(npmPackage.equals(triggerer.replace(".", "-"))){
+                    return true;
+                }
+            }
+            String[] newCommands = {"npm", "view", triggeree.replace(".", "-"), "dependencies", "--json"};
+            proc = rt.exec(newCommands);
+            //stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            message = "";
+            s = null;
+            while((s = stdInput.readLine()) !=null)
+                message+=s;
+            buildListener.getLogger().println(message);
+            deps = new JSONObject("{}");
+            keys = deps.keys();
+            while(keys.hasNext()){
+                String npmPackage = keys.next();
+                if(npmPackage.equals(triggerer.replace(".", "-"))){
+                    return true;
+                }
+            }
+        */
+        }
+        catch(IOException e){}
+        finally{return false;}
+    }
+
     
     @Override
     public BuildStepMonitor getRequiredMonitorService() {

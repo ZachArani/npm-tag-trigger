@@ -23,9 +23,6 @@ import hudson.EnvVars;
 import org.json.*;
 import java.util.Iterator;
 import hudson.model.BuildableItem;
-import org.jenkinsci.plugins.github.extension.GHEventsSubscriber;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 import hudson.model.TaskListener;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,17 +31,13 @@ import java.lang.Process;
 import java.lang.ProcessBuilder;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-
-
-
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Extension
 public class npmBuildTrigger extends Trigger<BuildableItem>  {
-    private static final Logger LOGGER = LoggerFactory.getLogger(GHEventsSubscriber.class);
-    String message = "";
+    private static final Logger LOGGER = LoggerFactory.getLogger(npmBuildTrigger.class);
     Run<?,?> upstreamBuild;
-    boolean buildCalled;
     @DataBoundConstructor
     public npmBuildTrigger(){
 
@@ -54,53 +47,6 @@ public class npmBuildTrigger extends Trigger<BuildableItem>  {
     public void run(){
         //if(!job.isBuilding())
             job.scheduleBuild(new UpstreamCause(upstreamBuild));
-    }
-    
-    public void checkDependencies(String triggerer, Run<?,?> upstream){
-        upstreamBuild = upstream;
-        try{
-            Runtime rt = Runtime.getRuntime();
-            String[] commands = {"npm", "view", job.getDisplayName().replace(".", "-"), "devDependencies", "--json"};
-            Process proc = rt.exec(commands);
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            String message = "";
-            String s = null;
-            while((s = stdInput.readLine()) !=null){
-                message+=s;
-            }
-            JSONObject deps = new JSONObject(message);
-            Iterator<String> keys = deps.keys();
-            while(keys.hasNext()){
-                String npmPackage = keys.next();
-                //LOGGER.info(npmPackage);
-                if(npmPackage.equals(triggerer.replace(".", "-"))){
-                    LOGGER.info("PACKAGE FOUND");
-                    run();
-                    buildCalled = true;
-                }
-            }
-            if(!buildCalled){
-                String[] newCommands = {"npm", "view", job.getDisplayName().replace(".", "-"), "dependencies", "--json"};
-                proc = rt.exec(newCommands);
-                //stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-                message = "";
-                s = null;
-                while((s = stdInput.readLine()) !=null)
-                    message+=s;
-                deps = new JSONObject(message);
-                keys = deps.keys();
-                while(keys.hasNext()){
-                    String npmPackage = keys.next();
-                    //LOGGER.info(npmPackage);
-                    if(npmPackage.equals(triggerer.replace(".", "-"))){
-                        LOGGER.info("PACKAGE FOUND");
-                        run();
-                        buildCalled = true;
-                    }
-                }
-            }
-        }
-        catch(IOException e){}
     }
     
     
