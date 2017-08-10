@@ -42,30 +42,30 @@ public class npmBuildTrigger extends Trigger<BuildableItem>  {
     public npmBuildTrigger(){
 
     }
-    
+
     @Override
     public void run(){
         //if(!job.isBuilding())
             job.scheduleBuild(new UpstreamCause(upstreamBuild));
     }
-    
-    
-    
+
+
+
     public BuildableItem getJob(){
             return job;
         }
-    
+
     @Extension
     public static class DescriptorImpl extends TriggerDescriptor {
         public boolean isApplicable(Item item){
             return true;
         }
-        
+
         public String getDisplayName(){
             return "Dependent package completes a build";
         }
-        
-       
-        
+
+
+
     }
 }
