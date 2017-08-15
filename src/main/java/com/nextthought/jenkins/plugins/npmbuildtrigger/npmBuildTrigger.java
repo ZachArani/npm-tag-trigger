@@ -46,7 +46,11 @@ public class npmBuildTrigger extends Trigger<BuildableItem>  {
     @Override
     public void run(){
         //if(!job.isBuilding())
-            job.scheduleBuild(new UpstreamCause(upstreamBuild));
+            job.scheduleBuild();
+    }
+
+    public void run(Run<?,?> upstreamBuild){
+      job.scheduleBuild(new UpstreamCause(upstreamBuild));
     }
 
 

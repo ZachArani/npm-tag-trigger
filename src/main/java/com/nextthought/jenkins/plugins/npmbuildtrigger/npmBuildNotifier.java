@@ -52,14 +52,16 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
         buildListener = listener;
         build = run;
         EnvVars env = run.getEnvironment(listener);
-        listener.getLogger().println("Starting notification");
+        listener.getLogger().println("Starting NPM Build Trigger");
         try(ACLContext ctx = ACL.as(ACL.SYSTEM)){ //Uses the security context of SYSTEM user in order to look at all of the jobs that Jenkins is running. Don't try this at home, kids.
             for(Item i: Jenkins.getInstance().getAllItems(Item.class)){
                 if(triggerFrom(i, npmBuildTrigger.class) != null){
-                    listener.getLogger().println("JOB FOUND " + getPackageName(new File(getWorkspace(i.getDisplayName())));
+                    listener.getLogger().println("JOB FOUND " + getPackageName(new File(getWorkspace(i.getDisplayName()))));
                     npmBuildTrigger trig = triggerFrom(i, npmBuildTrigger.class);
-                    if(checkDependencies(getPackageName(new File(workspace.toString())), getPackageName(new File(getWorkspace(i.getDisplayName())))))
-                        trig.run();
+                    if(checkDependencies(getPackageName(new File(workspace.toString())), getPackageName(new File(getWorkspace(i.getDisplayName()))), i.getDisplayName())){
+                      trig.run(run);
+                      listener.getLogger().println("Started build for job " + i.getDisplayName() + ", as it depends on the current job.");
+                    }
                 }
             }
         }
@@ -84,11 +86,10 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
     }
 
     public String getWorkspace(String triggeree){
-      buildListener.getLogger().println("/Users/Shared/Jenkins/Home/workspace/" + triggeree);
       return "/Users/Shared/Jenkins/Home/workspace/" + triggeree;
     }
 
-    public boolean checkDependencies(String triggerer, String triggeree){
+    public boolean checkDependencies(String triggerer, String triggeree, String jobName){
       boolean notFound = false;
       try{
           Runtime rt;
@@ -97,52 +98,85 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
           BufferedReader stdInput;
           String message;
           String s;
-
+          JSONObject deps;
+          Iterator<String> keys;
           rt = Runtime.getRuntime();
-          commands = {"npm", "view", triggeree.replace(".", "-"), "devDependencies", "--json"};
-          proc = rt.exec(commands);
+          String[] devCommands = {"npm", "view", triggeree.replace(".", "-"), "devDependencies", "--json"};
+          proc = rt.exec(devCommands);
           stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
           message = "";
           while((s = stdInput.readLine()) !=null){
               message+=s;
           }
-          buildListener.getLogger().println(message);
-          JSONObject deps = new JSONObject(message);
-          Iterator<String> keys = deps.keys();
+          deps = new JSONObject(message);
+          keys = deps.keys();
           while(keys.hasNext()){
               String npmPackage = keys.next();
               if(npmPackage.equals(triggerer.replace(".", "-"))){
-                  return true;
+                return true;
               }
               if(npmPackage.equals("error")){
                 notFound = true;
               }
           }
           if(notFound){
-
+            String[] devNotFoundCommands = {"npm", "view", jobName.replace(".", "-"), "devDependencies", "--json"};
+            proc = rt.exec(devNotFoundCommands);
+            stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            message = "";
+            while((s = stdInput.readLine()) !=null){
+                message+=s;
+              }
+              deps = new JSONObject(message);
+              keys = deps.keys();
+              while(keys.hasNext()){
+                  String npmPackage = keys.next();
+                  if(npmPackage.equals(triggerer.replace(".", "-"))){
+                      return true;
+                  }
+              }
           }
-          String[] newCommands = {"npm", "view", triggeree.replace(".", "-"), "dependencies", "--json"};
-          proc = rt.exec(newCommands);
-          //stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+          notFound = false;
+          String[] depCommands = {"npm", "view", triggeree.replace(".", "-"), "dependencies", "--json"};
+          proc = rt.exec(depCommands);
+          stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
           message = "";
           s = null;
           while((s = stdInput.readLine()) !=null)
               message+=s;
-          buildListener.getLogger().println(message);
           deps = new JSONObject(message);
           keys = deps.keys();
           while(keys.hasNext()){
               String npmPackage = keys.next();
               if(npmPackage.equals(triggerer.replace(".", "-"))){
-                  return true;
+                return true;
+              }
+              if(npmPackage.equals("error")){
+                notFound = true;
               }
           }
+          if(notFound){
+            String[] depNotFoundCommands = {"npm", "view", jobName.replace(".", "-"), "dependencies", "--json"};
+            proc = rt.exec(depNotFoundCommands);
+            stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            message = "";
+            while((s = stdInput.readLine()) !=null){
+                message+=s;
+              }
+              deps = new JSONObject(message);
+              keys = deps.keys();
+              while(keys.hasNext()){
+                  String npmPackage = keys.next();
+                  if(npmPackage.equals(triggerer.replace(".", "-"))){
+                    return true;
+                  }
+              }
+          }
+          return false;
       }
-      catch(IOException e){}
-      finally{return false;}
+      catch(IOException e){buildListener.getLogger().println("ERROR: Some sort of error occured while processing the NPM Build Trigger. See stacktrace below: \n" + e.getStackTrace()[0]); return false;}
     }
 
-    public 
 
 
     @Override
