@@ -66,7 +66,7 @@ public class npmBuildTrigger extends Trigger<BuildableItem>  {
         }
 
         public String getDisplayName(){
-            return "Dependent package completes a build";
+            return "Dependent package builds";
         }
 
 
