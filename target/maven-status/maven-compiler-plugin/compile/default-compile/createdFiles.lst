@@ -15,6 +15,7 @@ com/nextthought/jenkins/plugins/eventemitter/EventListener.class
 com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildNotifier$DescriptorImpl.class
 org/json/JSONArray.class
 org/json/JSONPointer.class
+com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildEventListener$DescriptorImpl.class
 org/json/JSONString.class
 org/json/XML$1$1.class
 org/jenkinsci/plugins/github/util/JobInfoHelpers.class

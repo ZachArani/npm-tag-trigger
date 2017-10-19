@@ -145,7 +145,34 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
       catch(IOException e){return false;}
     }
 
+    @Extension
+    public static final class DescriptorImpl extends JobPropertyDescriptor {
 
+        public DescriptorImpl() {
+            load();
+        }
+
+        @Override
+        public boolean isApplicable(Class<? extends Job> jobType) {
+            return true;
+        }
+
+        @Override
+        public String getDisplayName(){
+          return "Npm Build Listener";
+        }
+
+        @Override
+        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+            // To persist global configuration information,
+            // set that to properties and call save().
+            // ^Can also use req.bindJSON(this, formData);
+            //  (easier when there are many fields; need set* methods for this, like setUseFrench)
+            save();
+            return super.configure(req,formData);
+        }
+
+    }
 
 
 

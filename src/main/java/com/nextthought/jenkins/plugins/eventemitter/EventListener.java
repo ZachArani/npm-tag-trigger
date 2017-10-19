@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-public abstract class EventListener<E extends Event> extends JobProperty<Job<?,?>>{
+public class EventListener<E extends Event> extends JobProperty<Job<?,?>>{
 
     public EventListener() {
     }
@@ -23,17 +23,23 @@ public abstract class EventListener<E extends Event> extends JobProperty<Job<?,?
       EventBus.dispatch(event);
     }
 
-    public abstract void notify(E event);
+    public void notify(E event){}
 
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl)super.getDescriptor();
     }
 
+    @Extension
     public static final class DescriptorImpl extends JobPropertyDescriptor {
 
         public DescriptorImpl() {
             load();
+        }
+
+        @Override
+        public boolean isApplicable(Class<? extends Job> jobType) {
+            return true;
         }
 
         @Override
