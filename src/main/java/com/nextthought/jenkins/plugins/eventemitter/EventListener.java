@@ -13,49 +13,27 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.ArrayList;
+import jenkins.model.Jenkins;
 
-public class EventListener<E extends Event> extends JobProperty<Job<?,?>>{
+public abstract class EventListener<E extends Event>{
 
-    public EventListener() {
-    }
-
-    public void send(E event){
-      EventBus.dispatch(event);
-    }
-
-    public void notify(E event){}
-
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
-    }
-
-    @Extension
-    public static final class DescriptorImpl extends JobPropertyDescriptor {
-
-        public DescriptorImpl() {
-            load();
-        }
-
-        @Override
-        public boolean isApplicable(Class<? extends Job> jobType) {
-            return true;
-        }
-
-        @Override
-        public String getDisplayName(){
-          return "Event Emitter";
-        }
-
-        @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            // To persist global configuration information,
-            // set that to properties and call save().
-            // ^Can also use req.bindJSON(this, formData);
-            //  (easier when there are many fields; need set* methods for this, like setUseFrench)
-            save();
-            return super.configure(req,formData);
-        }
+    public EventListener(){
 
     }
+    public EventListener(Job j){
+      EventEmitter emitter = (EventEmitter)j.getProperty(EventEmitter.class);
+      emitter.addListener(this);
+
+    }
+
+    public EventListener(String jobName){
+      Job job = (Job)Jenkins.getInstance().getItemByFullName(jobName);
+      EventEmitter emitter = (EventEmitter)job.getProperty(EventEmitter.class);
+      emitter.addListener(this);
+    }
+
+
+    public abstract void notify(E event);
+
 }

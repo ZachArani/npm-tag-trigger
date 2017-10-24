@@ -1,4 +1,3 @@
-com/nextthought/jenkins/plugins/eventemitter/EventListener$DescriptorImpl.class
 com/nextthought/jenkins/plugins/eventemitter/EventBus.stapler
 org/json/HTTP.class
 org/json/HTTPTokener.class
@@ -36,7 +35,9 @@ org/json/JSONException.class
 com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildEvent.class
 org/json/XML.class
 org/json/XMLTokener.class
+com/nextthought/jenkins/plugins/eventemitter/EventEmitter$DescriptorImpl.class
 org/json/CDL.class
+com/nextthought/jenkins/plugins/eventemitter/EventEmitter.class
 org/jenkinsci/plugins/github/util/JobInfoHelpers$3.class
 com/nextthought/jenkins/plugins/eventemitter/EventBus.class
 org/json/JSONML.class

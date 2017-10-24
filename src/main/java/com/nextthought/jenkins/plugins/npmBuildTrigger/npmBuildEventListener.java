@@ -21,18 +21,34 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Iterator;
 import hudson.model.Run;
+import hudson.model.Cause;
 import java.util.Set;
 import jenkins.model.ParameterizedJobMixIn;
 import com.nextthought.jenkins.plugins.eventemitter.*;
 import org.json.*;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+import jenkins.model.Jenkins;
 
 public class npmBuildEventListener extends EventListener<npmBuildEvent>{
-    Job currentJob = (Job)owner;
+    private Job currentJob;
+    private Run<?,?> upstreamBuild;
+    Logger logger = LogManager.getLogManager().getLogger("hudson.WebAppMain");
+    public npmBuildEventListener(Job j){
+      currentJob = j;
+    }
 
     @Override
     public void notify(npmBuildEvent event){
-      Run<?,?> upstreamBuild = event.getContent();
-      if(hasPackage(upstreamBuild.getDisplayName(), getPackageName(new File(getWorkspace(currentJob.getDisplayName()))), currentJob.getDisplayName()))
+      //logger.info("At npmBuildEventListener, the event is : " + event);
+      upstreamBuild = event.getContent();
+      String searchP = upstreamBuild.getParent().getDisplayName();
+      String jobP = getPackageName(new File(getWorkspace(currentJob.getDisplayName())));
+      String jobN = currentJob.getDisplayName();
+      if(!isPR(upstreamBuild) && hasPackage(searchP, jobP, jobN))
         ParameterizedJobMixIn.getTrigger(currentJob, npmBuildTrigger.class).run(event.getContent());
     }
 
@@ -51,6 +67,18 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
       }
       catch(IOException e){}
       finally{ return message; }
+    }
+
+    public Job getJob(){
+      return currentJob;
+    }
+
+    private boolean isPR(Run<?,?> build){
+      for(Cause c : build.getCauses()){
+        if(c.getShortDescription().contains("GitHub PR"))
+          return true;
+      }
+      return false;
     }
 
     public String getWorkspace(String jobPackage){
@@ -76,17 +104,22 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
           while((s = stdInput.readLine()) !=null){
               message+=s;
           }
-          deps = new org.json.JSONObject(message);
-          keys = deps.keys();
-          while(keys.hasNext()){
-              String npmPackage = keys.next();
-              if(npmPackage.equals(searchPackage.replace(".", "-"))){
-                return true;
-              }
-              if(npmPackage.equals("error")){
-                notFound = true;
+          logger.info("During the package search, the message (on 1st run) is " + message);
+          if(message.contains("{") && message.contains("}")){
+            deps = new org.json.JSONObject(message);
+            keys = deps.keys();
+            while(keys.hasNext()){
+                String npmPackage = keys.next();
+                if(npmPackage.equals(searchPackage.replace(".", "-"))){
+                  return true;
+                }
+                if(npmPackage.equals("error")){
+                  notFound = true;
+                }
               }
           }
+          else
+            notFound = true;
           if(notFound){
             String[] devNotFoundCommands = {"npm", "view", jobName.replace(".", "-"), "devDependencies", "--json"};
             proc = rt.exec(devNotFoundCommands);
@@ -95,6 +128,8 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
             while((s = stdInput.readLine()) !=null){
                 message+=s;
               }
+            logger.info("During the package search, the message (on 2nd run) is " + message);
+            if(message.contains("{") && message.contains("}")){
               deps = new org.json.JSONObject(message);
               keys = deps.keys();
               while(keys.hasNext()){
@@ -102,7 +137,8 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
                   if(npmPackage.equals(searchPackage.replace(".", "-"))){
                       return true;
                   }
-              }
+                }
+            }
           }
           notFound = false;
           String[] depCommands = {"npm", "view", jobPackage.replace(".", "-"), "dependencies", "--json"};
@@ -112,17 +148,22 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
           s = null;
           while((s = stdInput.readLine()) !=null)
               message+=s;
-          deps = new org.json.JSONObject(message);
-          keys = deps.keys();
-          while(keys.hasNext()){
-              String npmPackage = keys.next();
-              if(npmPackage.equals(searchPackage.replace(".", "-"))){
-                return true;
+          logger.info("During the package search, the message (on 3rd run) is " + message);
+          if(message.contains("{") && message.contains("}")){
+            deps = new org.json.JSONObject(message);
+            keys = deps.keys();
+            while(keys.hasNext()){
+                String npmPackage = keys.next();
+                if(npmPackage.equals(searchPackage.replace(".", "-"))){
+                  return true;
+                }
+                if(npmPackage.equals("error")){
+                  notFound = true;
               }
-              if(npmPackage.equals("error")){
-                notFound = true;
-              }
+            }
           }
+          else
+            notFound = true;
           if(notFound){
             String[] depNotFoundCommands = {"npm", "view", jobName.replace(".", "-"), "dependencies", "--json"};
             proc = rt.exec(depNotFoundCommands);
@@ -130,7 +171,8 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
             message = "";
             while((s = stdInput.readLine()) !=null){
                 message+=s;
-              }
+            }
+            if(message.contains("{") && message.contains("}")){
               deps = new org.json.JSONObject(message);
               keys = deps.keys();
               while(keys.hasNext()){
@@ -139,6 +181,7 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
                     return true;
                   }
               }
+            }
           }
           return false;
       }

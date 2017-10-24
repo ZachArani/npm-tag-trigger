@@ -15,6 +15,7 @@
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/JSONObject.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/JSONPointer.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/HTTP.java
+/Users/zach.arani/Documents/npm-build-trigger/src/main/java/com/nextthought/jenkins/plugins/eventemitter/EventEmitter.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/JSONArray.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/CookieList.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildNotifier.java
