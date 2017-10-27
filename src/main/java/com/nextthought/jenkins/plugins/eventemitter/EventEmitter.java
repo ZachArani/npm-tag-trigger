@@ -13,12 +13,47 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import org.kohsuke.stapler.DataBoundConstructor;
 import java.util.ArrayList;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+import java.io.File;
+import hudson.FilePath;
+import com.nextthought.jenkins.plugins.npmBuildTrigger.*;
 
 public class EventEmitter<E extends Event> extends JobProperty<AbstractProject<?,?>>{
     ArrayList<EventListener> listeners = new ArrayList<EventListener>();
+    boolean listening = false;
+//    Logger logger = LogManager.getLogManager().getLogger("hudson.WebAppMain");
 
-    public EventEmitter() {
+    /*@DataBoundConstructor
+    public EventEmitter(){
+
+    }*/
+
+    @DataBoundConstructor
+    public EventEmitter(boolean listening) {
+      this.listening = listening;
+    }
+
+    @Override
+    public JobProperty<AbstractProject<?,?>> reconfigure(StaplerRequest req, JSONObject form){
+      //logger.info("Attempting to add EventListener");
+      //if(!containsListener(npmBuildEventListener.class)){
+        return addListener(new npmBuildEventListener(owner));
+      //}
+      //return null;
+
+    }
+    public boolean getListening(){
+      return listening;
+    }
+
+    public void setListening(boolean listening){
+      this.listening = listening;
     }
 
     public void send(E event){
@@ -26,17 +61,26 @@ public class EventEmitter<E extends Event> extends JobProperty<AbstractProject<?
     }
 
     public void notify(E event){
+      //logger.info("notifying");
       for(EventListener listener : listeners){
         listener.notify(event);
       }
     }
 
-    public void addListener(EventListener listener){
+    private boolean containsListener(Class listenerClass){
+      for(EventListener listener : listeners)
+        if(listener.getClass() == listenerClass)
+          return true;
+      return false;
+    }
+
+    public EventEmitter<E> addListener(EventListener listener){
       listeners.add(listener);
+      return this;
     }
 
     public String toString(){
-      return listeners.toString();
+      return getClass().getName() + "@" + Integer.toHexString(hashCode()) + ":" + listeners.toString();
     }
 
 
@@ -54,7 +98,8 @@ public class EventEmitter<E extends Event> extends JobProperty<AbstractProject<?
 
         @Override
         public boolean isApplicable(Class<? extends Job> jobType) {
-            return AbstractProject.class.isAssignableFrom(jobType);
+
+          return AbstractProject.class.isAssignableFrom(jobType);
         }
 
         @Override
@@ -64,12 +109,9 @@ public class EventEmitter<E extends Event> extends JobProperty<AbstractProject<?
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            // To persist global configuration information,
-            // set that to properties and call save().
-            // ^Can also use req.bindJSON(this, formData);
-            //  (easier when there are many fields; need set* methods for this, like setUseFrench)
+            req.bindJSON(this, formData); //Sends Jelly vars back to relevant constructors
             save();
-            return super.configure(req,formData);
+            return true;
         }
 
     }

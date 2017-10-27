@@ -12,9 +12,11 @@ import hudson.model.JobPropertyDescriptor;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
+import hudson.model.Descriptor;
 import java.util.Hashtable;
 import java.util.ArrayList;
 import jenkins.model.Jenkins;
+import hudson.model.AbstractDescribableImpl;
 
 public abstract class EventListener<E extends Event>{
 
