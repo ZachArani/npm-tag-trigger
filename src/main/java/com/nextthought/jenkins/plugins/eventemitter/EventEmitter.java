@@ -24,95 +24,16 @@ import java.io.File;
 import hudson.FilePath;
 import com.nextthought.jenkins.plugins.npmBuildTrigger.*;
 
-public class EventEmitter<E extends Event> extends JobProperty<AbstractProject<?,?>>{
-    ArrayList<EventListener> listeners = new ArrayList<EventListener>();
-    boolean listening = false;
-//    Logger logger = LogManager.getLogManager().getLogger("hudson.WebAppMain");
-
-    /*@DataBoundConstructor
-    public EventEmitter(){
-
-    }*/
-
-    @DataBoundConstructor
-    public EventEmitter(boolean listening) {
-      this.listening = listening;
-    }
-
-    @Override
-    public JobProperty<AbstractProject<?,?>> reconfigure(StaplerRequest req, JSONObject form){
-      //logger.info("Attempting to add EventListener");
-      //if(!containsListener(npmBuildEventListener.class)){
-        return addListener(new npmBuildEventListener(owner));
-      //}
-      //return null;
-
-    }
-    public boolean getListening(){
-      return listening;
-    }
-
-    public void setListening(boolean listening){
-      this.listening = listening;
-    }
-
-    public void send(E event){
-      EventBus.dispatch(event);
-    }
+public abstract class EventEmitter{
 
     public void notify(E event){
-      //logger.info("notifying");
-      for(EventListener listener : listeners){
-        listener.notify(event);
+      for(EventListener listener : getReceivers()){
+        perform(E, J);
       }
     }
 
-    private boolean containsListener(Class listenerClass){
-      for(EventListener listener : listeners)
-        if(listener.getClass() == listenerClass)
-          return true;
-      return false;
-    }
+    public abstract ArrayList<J extends Job> getReceivers();
 
-    public EventEmitter<E> addListener(EventListener listener){
-      listeners.add(listener);
-      return this;
-    }
+    public abstract void perform(E event, ArrayList<J extends Job> job);
 
-    public String toString(){
-      return getClass().getName() + "@" + Integer.toHexString(hashCode()) + ":" + listeners.toString();
-    }
-
-
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
-    }
-
-    @Extension
-    public static final class DescriptorImpl extends JobPropertyDescriptor {
-
-        public DescriptorImpl() {
-            load();
-        }
-
-        @Override
-        public boolean isApplicable(Class<? extends Job> jobType) {
-
-          return AbstractProject.class.isAssignableFrom(jobType);
-        }
-
-        @Override
-        public String getDisplayName(){
-          return "Event Emitter";
-        }
-
-        @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            req.bindJSON(this, formData); //Sends Jelly vars back to relevant constructors
-            save();
-            return true;
-        }
-
-    }
 }

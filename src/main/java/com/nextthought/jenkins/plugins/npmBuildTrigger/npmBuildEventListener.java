@@ -34,23 +34,23 @@ import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
 public class npmBuildEventListener extends EventListener<npmBuildEvent>{
-    private Job currentJob;
-    private Run<?,?> upstreamBuild;
-    Logger logger = LogManager.getLogManager().getLogger("hudson.WebAppMain");
 
-    public npmBuildEventListener(Job j){
-      currentJob = j;
+
+    public npmBuildEventListener(AbstractProject<?,?> j){
+      fullJobName = j.getFullName();
+      displayName = j.getDisplayName();
     }
+
 
     @Override
     public void notify(npmBuildEvent event){
       //logger.info("At npmBuildEventListener, the event is : " + event);
       upstreamBuild = event.getContent();
       String searchP = upstreamBuild.getParent().getDisplayName();
-      String jobP = getPackageName(new File(getWorkspace(currentJob.getDisplayName())));
-      String jobN = currentJob.getDisplayName();
+      String jobP = getPackageName(new File(getWorkspace(displayName)));
+      String jobN = displayName;
       if(!isPR(upstreamBuild) && hasPackage(searchP, jobP, jobN))
-        ParameterizedJobMixIn.getTrigger(currentJob, npmBuildTrigger.class).run(event.getContent());
+        ParameterizedJobMixIn.getTrigger((Job)(Jenkins.getInstance().getItemByFullName(fullJobName)), npmBuildTrigger.class).run(event.getContent());
     }
 
     public String getPackageName(File workspace){
@@ -70,9 +70,7 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
       finally{ return message; }
     }
 
-    public Job getJob(){
-      return currentJob;
-    }
+
 
     private boolean isPR(Run<?,?> build){
       for(Cause c : build.getCauses()){
@@ -105,7 +103,7 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
           while((s = stdInput.readLine()) !=null){
               message+=s;
           }
-          logger.info("During the package search, the message (on 1st run) is " + message);
+          //logger.info("During the package search, the message (on 1st run) is " + message);
           if(message.contains("{") && message.contains("}")){
             deps = new org.json.JSONObject(message);
             keys = deps.keys();
@@ -129,7 +127,7 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
             while((s = stdInput.readLine()) !=null){
                 message+=s;
               }
-            logger.info("During the package search, the message (on 2nd run) is " + message);
+            //logger.info("During the package search, the message (on 2nd run) is " + message);
             if(message.contains("{") && message.contains("}")){
               deps = new org.json.JSONObject(message);
               keys = deps.keys();
@@ -149,7 +147,7 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
           s = null;
           while((s = stdInput.readLine()) !=null)
               message+=s;
-          logger.info("During the package search, the message (on 3rd run) is " + message);
+          //logger.info("During the package search, the message (on 3rd run) is " + message);
           if(message.contains("{") && message.contains("}")){
             deps = new org.json.JSONObject(message);
             keys = deps.keys();

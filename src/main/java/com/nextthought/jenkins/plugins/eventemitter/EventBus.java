@@ -22,23 +22,28 @@ import java.util.logging.FileHandler;
 import java.util.logging.SimpleFormatter;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import java.util.ArrayList;
 
-public class EventBus{
-
-    @DataBoundConstructor
-    public EventBus() {
+public static class EventBus{
+    private static ArrayList<EventEmitter> emitters = new ArrayList<EventEmitter>();
+    public static void dispatch(Event<?, ?> event){
+      for(EventEmitter emitter: emitters){
+        emitter.notify(event);
+      }
     }
 
-    public static void dispatch(Event<?> event){
-      Logger logger = LogManager.getLogManager().getLogger("hudson.WebAppMain");
-    //  logger.info("At EventBus, event is : " + event);
-      try(ACLContext ctx = ACL.as(ACL.SYSTEM)){ //Uses the security context of SYSTEM user in order to look at all of the jobs that Jenkins is running. Don't try this at home, kids.
-        for(Job i: Jenkins.getInstance().getAllItems(Job.class)){
-            EventEmitter listener = (EventEmitter)i.getProperty(EventEmitter.class);
-            if(listener!=null)
-              listener.notify(event);
-        }
-      }
+    public static ArrayList<EventEmitter> getEmitters(){
+      return emitters;
+    }
+
+    public static void addEmitter(EventEmitter emitter){
+      emitters.add(emitter);
+    }
+    private static boolean containsEmitter(Class class){
+      for(EventEmitter emitter : emitters)
+        if(emitter.getClass() != class)
+          return true;
+      return false;
     }
 
 }
