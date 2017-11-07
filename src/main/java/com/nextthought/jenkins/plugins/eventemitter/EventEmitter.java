@@ -22,18 +22,19 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.io.File;
 import hudson.FilePath;
+import hudson.model.FreeStyleProject;
 import com.nextthought.jenkins.plugins.npmBuildTrigger.*;
 
 public abstract class EventEmitter{
 
-    public void notify(E event){
-      for(EventListener listener : getReceivers()){
-        perform(E, J);
+    public <E extends Event> void notify(E event){
+      for(FreeStyleProject job : getReceivers()){
+        perform(event, job);
       }
     }
 
-    public abstract ArrayList<J extends Job> getReceivers();
+    public abstract ArrayList<FreeStyleProject> getReceivers();
 
-    public abstract void perform(E event, ArrayList<J extends Job> job);
+    public abstract void perform(Event event, FreeStyleProject targetJob);
 
 }

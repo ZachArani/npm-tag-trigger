@@ -23,8 +23,9 @@ import java.util.logging.SimpleFormatter;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.ArrayList;
+import hudson.model.FreeStyleProject;
 
-public static class EventBus{
+public class EventBus{
     private static ArrayList<EventEmitter> emitters = new ArrayList<EventEmitter>();
     public static void dispatch(Event<?, ?> event){
       for(EventEmitter emitter: emitters){
@@ -39,9 +40,9 @@ public static class EventBus{
     public static void addEmitter(EventEmitter emitter){
       emitters.add(emitter);
     }
-    private static boolean containsEmitter(Class class){
+    public static <E extends EventEmitter> boolean containsEmitter(E targetEmitter){
       for(EventEmitter emitter : emitters)
-        if(emitter.getClass() != class)
+        if(emitter.getClass() == targetEmitter.getClass())
           return true;
       return false;
     }

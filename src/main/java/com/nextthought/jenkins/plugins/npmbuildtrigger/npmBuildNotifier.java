@@ -18,6 +18,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import hudson.model.Job;
 import hudson.model.Cause.RemoteCause;
 import hudson.tasks.Publisher;
+import hudson.model.FreeStyleProject;
 import hudson.tasks.BuildStepMonitor;
 import hudson.model.AbstractProject;
 import java.io.File;
@@ -32,8 +33,8 @@ import java.util.Iterator;
 import hudson.model.Result;
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import com.nextthought.jenkins.plugins.eventemitter.EventListener;
 import com.nextthought.jenkins.plugins.eventemitter.EventBus;
+import hudson.model.FreeStyleBuild;
 
 public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
 
@@ -55,7 +56,7 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
         EnvVars env = run.getEnvironment(listener);
         if(run.getResult() == Result.SUCCESS){
           listener.getLogger().println("Starting NPM Build Trigger");
-          EventBus.dispatch(new npmBuildEvent(run, run.getParent()));
+          EventBus.dispatch(new npmBuildEvent((FreeStyleBuild)run, (FreeStyleProject)run.getParent()));
         }
     }
 

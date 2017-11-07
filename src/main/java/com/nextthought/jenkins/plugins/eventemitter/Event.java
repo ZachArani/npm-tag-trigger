@@ -2,17 +2,17 @@ package com.nextthought.jenkins.plugins.eventemitter;
 
 import hudson.model.Job;
 
-public abstract class Event<T, J>{
+public abstract class Event<P, O>{
 
-    protected T payload = null;
-    protected J origin = null;
+    protected P payload = null;
+    protected O origin = null;
 
-    public Event(T payload, J origin) {
+    public Event(P payload, O origin) {
       this.payload = payload;
       this.origin = origin;
     }
 
-    public abstract T getContent();
+    public abstract P getContent();
 
-    public abstract T getOrigin();
+    public abstract O getOrigin();
 }

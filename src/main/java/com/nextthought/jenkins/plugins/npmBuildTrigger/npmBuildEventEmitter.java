@@ -29,28 +29,23 @@ import org.json.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.SimpleFormatter;
+import hudson.model.FreeStyleProject;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
-public class npmBuildEventListener extends EventListener<npmBuildEvent>{
-
-
-    public npmBuildEventListener(AbstractProject<?,?> j){
-      fullJobName = j.getFullName();
-      displayName = j.getDisplayName();
-    }
+public class npmBuildEventEmitter extends EventEmitter{
 
 
     @Override
-    public void notify(npmBuildEvent event){
-      //logger.info("At npmBuildEventListener, the event is : " + event);
-      upstreamBuild = event.getContent();
+    public void perform(Event event, FreeStyleProject targetJob){
+      npmBuildEvent eventProper = (npmBuildEvent)event;
+      Run<?,?> upstreamBuild = eventProper.getContent();
       String searchP = upstreamBuild.getParent().getDisplayName();
-      String jobP = getPackageName(new File(getWorkspace(displayName)));
-      String jobN = displayName;
+      String jobP = getPackageName(new File(getWorkspace(targetJob.getDisplayName())));
+      String jobN = targetJob.getDisplayName();
       if(!isPR(upstreamBuild) && hasPackage(searchP, jobP, jobN))
-        ParameterizedJobMixIn.getTrigger((Job)(Jenkins.getInstance().getItemByFullName(fullJobName)), npmBuildTrigger.class).run(event.getContent());
+        ParameterizedJobMixIn.getTrigger((Job)(Jenkins.getInstance().getItemByFullName(targetJob.getFullName())), npmBuildTrigger.class).run(upstreamBuild);
     }
 
     public String getPackageName(File workspace){
@@ -70,6 +65,16 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
       finally{ return message; }
     }
 
+    @Override
+    public ArrayList<FreeStyleProject> getReceivers(){
+      ArrayList<FreeStyleProject> projects = new ArrayList<FreeStyleProject>();
+      for(FreeStyleProject proj : Jenkins.getInstance().getAllItems(FreeStyleProject.class)){
+        if(proj.getWorkspace() != null && new File(proj.getWorkspace().toString() + "/package.json").exists()){
+          projects.add(proj);
+        }
+      }
+      return projects;
+    }
 
 
     private boolean isPR(Run<?,?> build){
@@ -186,36 +191,6 @@ public class npmBuildEventListener extends EventListener<npmBuildEvent>{
       }
       catch(IOException e){return false;}
     }
-
-    @Extension
-    public static final class DescriptorImpl extends JobPropertyDescriptor {
-
-        public DescriptorImpl() {
-            load();
-        }
-
-        @Override
-        public boolean isApplicable(Class<? extends Job> jobType) {
-            return true;
-        }
-
-        @Override
-        public String getDisplayName(){
-          return "Npm Build Listener";
-        }
-
-        @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-          req.bindJSON(this, formData);
-
-          save();
-          return true;
-        }
-
-    }
-
-
-
 
 
 }
