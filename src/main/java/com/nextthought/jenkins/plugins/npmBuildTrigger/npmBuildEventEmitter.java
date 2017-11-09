@@ -30,22 +30,26 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.SimpleFormatter;
 import hudson.model.FreeStyleProject;
+import hudson.model.FreeStyleBuild;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
-public class npmBuildEventEmitter extends EventEmitter{
+public class NpmBuildEventEmitter extends EventEmitter{
 
 
     @Override
     public void perform(Event event, FreeStyleProject targetJob){
-      npmBuildEvent eventProper = (npmBuildEvent)event;
-      Run<?,?> upstreamBuild = eventProper.getContent();
-      String searchP = upstreamBuild.getParent().getDisplayName();
+      NpmBuildEvent eventProper = (NpmBuildEvent)event;
+      FreeStyleBuild upstreamBuild = eventProper.getContent();
+      String searchP = getPackageName(new File(getWorkspace(upstreamBuild.getParent().getDisplayName())));
       String jobP = getPackageName(new File(getWorkspace(targetJob.getDisplayName())));
       String jobN = targetJob.getDisplayName();
-      if(!isPR(upstreamBuild) && hasPackage(searchP, jobP, jobN))
-        ParameterizedJobMixIn.getTrigger((Job)(Jenkins.getInstance().getItemByFullName(targetJob.getFullName())), npmBuildTrigger.class).run(upstreamBuild);
+      //Job target = (Job)(Jenkins.getInstance().getItemByFullName(targetJob.getFullName()));
+      if(!isPR(upstreamBuild) && hasPackage(searchP, jobP, jobN)){
+        if(ParameterizedJobMixIn.getTrigger(targetJob, NpmBuildTrigger.class)!=null)
+          ParameterizedJobMixIn.getTrigger(targetJob, NpmBuildTrigger.class).run(upstreamBuild);
+      }
     }
 
     public String getPackageName(File workspace){

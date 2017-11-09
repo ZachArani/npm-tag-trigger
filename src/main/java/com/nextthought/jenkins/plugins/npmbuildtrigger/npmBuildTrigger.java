@@ -35,11 +35,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Extension
-public class npmBuildTrigger extends Trigger<BuildableItem>  {
-    private static final Logger LOGGER = LoggerFactory.getLogger(npmBuildTrigger.class);
+public class NpmBuildTrigger extends Trigger<BuildableItem>  {
+    //private static final Logger LOGGER = LoggerFactory.getLogger(npmBuildTrigger.class);
     Run<?,?> upstreamBuild;
     @DataBoundConstructor
-    public npmBuildTrigger(){
+    public NpmBuildTrigger(){
 
     }
 

@@ -1,7 +1,8 @@
 org/json/HTTP.class
 org/json/HTTPTokener.class
+com/nextthought/jenkins/plugins/npmBuildTrigger/NpmBuildEvent.class
 org/json/JSONObject.class
-com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildTrigger.class
+com/nextthought/jenkins/plugins/npmBuildTrigger/NpmBuildTrigger.class
 org/json/JSONPointer$Builder.class
 com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildNotifier.class
 org/jenkinsci/plugins/github/util/JobInfoHelpers$1.class
@@ -14,7 +15,6 @@ org/json/JSONPointer.class
 org/json/JSONString.class
 org/json/XML$1$1.class
 org/jenkinsci/plugins/github/util/JobInfoHelpers.class
-com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildEventEmitter.class
 org/json/JSONPointerException.class
 org/json/JSONStringer.class
 org/json/CookieList.class
@@ -22,13 +22,12 @@ org/json/JSONObject$Null.class
 com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildNotifier.stapler
 org/json/Cookie.class
 org/json/JSONTokener.class
+com/nextthought/jenkins/plugins/npmBuildTrigger/NpmBuildTrigger$DescriptorImpl.class
 org/json/Property.class
-com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildTrigger.stapler
 org/json/XML$1.class
 com/nextthought/jenkins/plugins/eventemitter/Event.class
-com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildTrigger$DescriptorImpl.class
+com/nextthought/jenkins/plugins/npmBuildTrigger/NpmBuildEventEmitter.class
 org/json/JSONException.class
-com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildEvent.class
 org/json/XML.class
 org/json/XMLTokener.class
 org/json/CDL.class
@@ -36,4 +35,5 @@ com/nextthought/jenkins/plugins/eventemitter/EventEmitter.class
 org/jenkinsci/plugins/github/util/JobInfoHelpers$3.class
 com/nextthought/jenkins/plugins/eventemitter/EventBus.class
 org/json/JSONML.class
+com/nextthought/jenkins/plugins/npmBuildTrigger/NpmBuildTrigger.stapler
 META-INF/annotations/hudson.Extension

@@ -55,8 +55,8 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
         build = run;
         EnvVars env = run.getEnvironment(listener);
         if(run.getResult() == Result.SUCCESS){
-          listener.getLogger().println("Starting NPM Build Trigger");
-          EventBus.dispatch(new npmBuildEvent((FreeStyleBuild)run, (FreeStyleProject)run.getParent()));
+          listener.getLogger().println("Running NPM Build Trigger");
+          EventBus.dispatch(new NpmBuildEvent((FreeStyleBuild)run, (FreeStyleProject)run.getParent()));
         }
     }
 

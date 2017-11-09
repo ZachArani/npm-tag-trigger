@@ -5,12 +5,12 @@ import com.nextthought.jenkins.plugins.eventemitter.Event;
 import hudson.model.FreeStyleProject;
 import hudson.model.FreeStyleBuild;
 import java.util.ArrayList;
-public class npmBuildEvent extends Event<FreeStyleBuild, FreeStyleProject>{
+public class NpmBuildEvent extends Event<FreeStyleBuild, FreeStyleProject>{
 
-    public npmBuildEvent(FreeStyleBuild runner, FreeStyleProject origin){
+    public NpmBuildEvent(FreeStyleBuild runner, FreeStyleProject origin){
       super(runner, origin);
-      if(!EventBus.containsEmitter(new npmBuildEventEmitter()))
-        EventBus.addEmitter(new npmBuildEventEmitter());
+      if(!EventBus.containsEmitter(new NpmBuildEventEmitter()))
+        EventBus.addEmitter(new NpmBuildEventEmitter());
     }
 
     public FreeStyleBuild getContent(){
