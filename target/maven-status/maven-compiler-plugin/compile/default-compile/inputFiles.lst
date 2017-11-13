@@ -2,6 +2,7 @@
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/XMLTokener.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/com/nextthought/jenkins/plugins/eventemitter/Event.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/JSONException.java
+/Users/zach.arani/Documents/npm-build-trigger/src/main/java/com/nextthought/jenkins/plugins/npmBuildTrigger/NpmBuild.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/com/nextthought/jenkins/plugins/eventemitter/EventBus.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/Cookie.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/JSONString.java
@@ -17,7 +18,7 @@
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/com/nextthought/jenkins/plugins/eventemitter/EventEmitter.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/JSONArray.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/CookieList.java
-/Users/zach.arani/Documents/npm-build-trigger/src/main/java/com/nextthought/jenkins/plugins/npmBuildTrigger/npmBuildNotifier.java
+/Users/zach.arani/Documents/npm-build-trigger/src/main/java/com/nextthought/jenkins/plugins/npmBuildTrigger/NpmBuildNotifier.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/HTTPTokener.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/com/nextthought/jenkins/plugins/npmBuildTrigger/NpmBuildEvent.java
 /Users/zach.arani/Documents/npm-build-trigger/src/main/java/org/json/CDL.java

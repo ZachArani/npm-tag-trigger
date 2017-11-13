@@ -3,7 +3,6 @@ import hudson.Launcher;
 import hudson.Extension;
 import hudson.util.FormValidation;
 import hudson.model.AbstractProject;
-import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.QueryParameter;
@@ -34,6 +33,10 @@ import hudson.model.FreeStyleBuild;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import jenkins.model.Jenkins;
+import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.nio.file.Files;
+import org.json.*;
 
 public class NpmBuildEventEmitter extends EventEmitter{
 
@@ -41,160 +44,40 @@ public class NpmBuildEventEmitter extends EventEmitter{
     @Override
     public void perform(Event event, FreeStyleProject targetJob){
       NpmBuildEvent eventProper = (NpmBuildEvent)event;
-      FreeStyleBuild upstreamBuild = eventProper.getContent();
-      String searchP = getPackageName(new File(getWorkspace(upstreamBuild.getParent().getDisplayName())));
-      String jobP = getPackageName(new File(getWorkspace(targetJob.getDisplayName())));
-      String jobN = targetJob.getDisplayName();
-      //Job target = (Job)(Jenkins.getInstance().getItemByFullName(targetJob.getFullName()));
-      if(!isPR(upstreamBuild) && hasPackage(searchP, jobP, jobN)){
+      String searchPackage = eventProper.getContent().getPackageName();
+      FreeStyleBuild upstreamBuild = eventProper.getContent().getBuild();
+      JSONObject targetReader = null;
+      try{
+        targetReader = new JSONObject(targetJob.getWorkspace().child("package.json").readToString());
+      }
+      catch(IOException | InterruptedException e){}
+      if(newHasPackage(searchPackage, targetReader)){
         if(ParameterizedJobMixIn.getTrigger(targetJob, NpmBuildTrigger.class)!=null)
           ParameterizedJobMixIn.getTrigger(targetJob, NpmBuildTrigger.class).run(upstreamBuild);
       }
-    }
-
-    public String getPackageName(File workspace){
-      String message = "";
-      try{
-          Runtime rt = Runtime.getRuntime();
-          String[] commands = {"npm", "view", "", "name"};
-          Process proc = rt.exec(commands, null, workspace);
-          BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-          String s = null;
-          while((s = stdInput.readLine()) !=null){
-              message+=s;
-          }
-
-      }
-      catch(IOException e){}
-      finally{ return message; }
     }
 
     @Override
     public ArrayList<FreeStyleProject> getReceivers(){
       ArrayList<FreeStyleProject> projects = new ArrayList<FreeStyleProject>();
       for(FreeStyleProject proj : Jenkins.getInstance().getAllItems(FreeStyleProject.class)){
-        if(proj.getWorkspace() != null && new File(proj.getWorkspace().toString() + "/package.json").exists()){
+        try{
+        if(proj.getWorkspace() != null && proj.getWorkspace().child("package.json").exists()){
           projects.add(proj);
         }
-      }
+      } catch(IOException | InterruptedException e){}
+    }
       return projects;
     }
 
 
-    private boolean isPR(Run<?,?> build){
-      for(Cause c : build.getCauses()){
-        if(c.getShortDescription().contains("GitHub PR"))
-          return true;
-      }
+
+    public boolean newHasPackage(String searchP, JSONObject jobReader){
+      if(jobReader.has("devDependencies") && jobReader.getJSONObject("devDependencies").has(searchP))
+        return true;
+      if(jobReader.has("dependencies") && jobReader.getJSONObject("dependencies").has(searchP))
+        return true;
       return false;
     }
-
-    public String getWorkspace(String jobPackage){
-          return "/Users/Shared/Jenkins/Home/workspace/" + jobPackage;
-    }
-
-    public boolean hasPackage(String searchPackage, String jobPackage, String jobName){
-      boolean notFound = false;
-      try{
-          Runtime rt;
-          String[] commands;
-          Process proc;
-          BufferedReader stdInput;
-          String message;
-          String s;
-          org.json.JSONObject deps;
-          Iterator<String> keys;
-          rt = Runtime.getRuntime();
-          String[] devCommands = {"npm", "view", jobPackage.replace(".", "-"), "devDependencies", "--json"};
-          proc = rt.exec(devCommands);
-          stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-          message = "";
-          while((s = stdInput.readLine()) !=null){
-              message+=s;
-          }
-          //logger.info("During the package search, the message (on 1st run) is " + message);
-          if(message.contains("{") && message.contains("}")){
-            deps = new org.json.JSONObject(message);
-            keys = deps.keys();
-            while(keys.hasNext()){
-                String npmPackage = keys.next();
-                if(npmPackage.equals(searchPackage.replace(".", "-"))){
-                  return true;
-                }
-                if(npmPackage.equals("error")){
-                  notFound = true;
-                }
-              }
-          }
-          else
-            notFound = true;
-          if(notFound){
-            String[] devNotFoundCommands = {"npm", "view", jobName.replace(".", "-"), "devDependencies", "--json"};
-            proc = rt.exec(devNotFoundCommands);
-            stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            message = "";
-            while((s = stdInput.readLine()) !=null){
-                message+=s;
-              }
-            //logger.info("During the package search, the message (on 2nd run) is " + message);
-            if(message.contains("{") && message.contains("}")){
-              deps = new org.json.JSONObject(message);
-              keys = deps.keys();
-              while(keys.hasNext()){
-                  String npmPackage = keys.next();
-                  if(npmPackage.equals(searchPackage.replace(".", "-"))){
-                      return true;
-                  }
-                }
-            }
-          }
-          notFound = false;
-          String[] depCommands = {"npm", "view", jobPackage.replace(".", "-"), "dependencies", "--json"};
-          proc = rt.exec(depCommands);
-          stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-          message = "";
-          s = null;
-          while((s = stdInput.readLine()) !=null)
-              message+=s;
-          //logger.info("During the package search, the message (on 3rd run) is " + message);
-          if(message.contains("{") && message.contains("}")){
-            deps = new org.json.JSONObject(message);
-            keys = deps.keys();
-            while(keys.hasNext()){
-                String npmPackage = keys.next();
-                if(npmPackage.equals(searchPackage.replace(".", "-"))){
-                  return true;
-                }
-                if(npmPackage.equals("error")){
-                  notFound = true;
-              }
-            }
-          }
-          else
-            notFound = true;
-          if(notFound){
-            String[] depNotFoundCommands = {"npm", "view", jobName.replace(".", "-"), "dependencies", "--json"};
-            proc = rt.exec(depNotFoundCommands);
-            stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            message = "";
-            while((s = stdInput.readLine()) !=null){
-                message+=s;
-            }
-            if(message.contains("{") && message.contains("}")){
-              deps = new org.json.JSONObject(message);
-              keys = deps.keys();
-              while(keys.hasNext()){
-                  String npmPackage = keys.next();
-                  if(npmPackage.equals(searchPackage.replace(".", "-"))){
-                    return true;
-                  }
-              }
-            }
-          }
-          return false;
-      }
-      catch(IOException e){return false;}
-    }
-
 
 }

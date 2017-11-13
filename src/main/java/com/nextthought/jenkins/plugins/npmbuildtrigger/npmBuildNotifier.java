@@ -17,6 +17,7 @@ import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.stapler.DataBoundConstructor;
 import hudson.model.Job;
 import hudson.model.Cause.RemoteCause;
+import hudson.model.Cause;
 import hudson.tasks.Publisher;
 import hudson.model.FreeStyleProject;
 import hudson.tasks.BuildStepMonitor;
@@ -35,15 +36,18 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import com.nextthought.jenkins.plugins.eventemitter.EventBus;
 import hudson.model.FreeStyleBuild;
+import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.nio.file.Files;
 
-public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
+public class NpmBuildNotifier extends Notifier implements SimpleBuildStep {
 
     Run<?,?> build;
     TaskListener buildListener;
     String message = "";
 
     @DataBoundConstructor
-    public npmBuildNotifier(){
+    public NpmBuildNotifier(){
     }
 
     @Override
@@ -54,10 +58,19 @@ public class npmBuildNotifier extends Notifier implements SimpleBuildStep {
         buildListener = listener;
         build = run;
         EnvVars env = run.getEnvironment(listener);
-        if(run.getResult() == Result.SUCCESS){
+        if(run.getResult() == Result.SUCCESS && !isPR(run)){
           listener.getLogger().println("Running NPM Build Trigger");
-          EventBus.dispatch(new NpmBuildEvent((FreeStyleBuild)run, (FreeStyleProject)run.getParent()));
+          JSONObject reader = new JSONObject(workspace.child("package.json").readToString());
+          EventBus.dispatch(new NpmBuildEvent(new NpmBuild(reader.getString("name"), (FreeStyleBuild)run), (FreeStyleProject)run.getParent()));
         }
+    }
+
+    private boolean isPR(Run<?,?> build){
+      for(Cause c : build.getCauses()){
+        if(c.getShortDescription().contains("GitHub PR"))
+          return true;
+      }
+      return false;
     }
 
     @Override
