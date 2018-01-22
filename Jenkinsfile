@@ -1,10 +1,10 @@
 pipeline {
   agent any
+  parameters {
+    string(name: 'PERSON', defaultValue: 'Mr Jenkins', description: 'Who should I say hello to?')
+  }
   stages {
     stage('General Setup') {
-      environment {
-        Test = 'Foo'
-      }
       steps {
         git(url: 'https://github.com/ZachArani/npm-tag-trigger.git', branch: 'master')
       }
