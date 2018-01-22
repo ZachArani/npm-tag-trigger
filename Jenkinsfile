@@ -9,6 +9,7 @@ pipeline {
     stage('General Setup') {
       steps {
         git(url: 'https://github.com/ZachArani/npm-tag-trigger.git', branch: 'master')
+        ansiColor(colorMapName: 'xterm')
       }
     }
   }
