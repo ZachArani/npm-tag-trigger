@@ -12,6 +12,14 @@ pipeline {
         ansiColor(colorMapName: 'xterm')
       }
     }
+    stage('If on Master') {
+      when {
+        branch 'master'
+      }
+      steps {
+        sh 'echo "this is master"'
+      }
+    }
   }
   options {
     buildDiscarder(logRotator(numToKeepStr: '10'))
