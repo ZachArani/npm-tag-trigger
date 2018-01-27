@@ -10,15 +10,14 @@ pipeline {
       steps {
         git(url: 'https://github.com/ZachArani/npm-tag-trigger.git', branch: 'master')
         sh(returnStdout: true, script: 'git tag -l --points-at HEAD')
-        sh 'echo env.BRANCH_NAME'
       }
     }
     stage('If on Master') {
       when {
-        branch 'master'
+        branch 'testan'
       }
       steps {
-        sh 'echo "this is master"'
+        sh 'echo "this is testan"'
       }
     }
   }
