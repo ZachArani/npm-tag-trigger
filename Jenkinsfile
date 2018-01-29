@@ -10,7 +10,7 @@ pipeline {
       steps {
         git(url: 'https://github.com/ZachArani/npm-tag-trigger.git', branch: 'master')
         sh(returnStdout: true, script: 'git tag -l --points-at HEAD')
-        sh 'git help'
+        sh 'git tag -l --points-at HEAD'
       }
     }
     stage('If on Master') {
